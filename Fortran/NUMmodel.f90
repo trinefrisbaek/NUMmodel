@@ -4,6 +4,7 @@
 !
 module NUMmodel
   use globals
+  use random
   use spectrum
   use generalists
   use diatoms_simple
@@ -25,12 +26,7 @@ module NUMmodel
    integer, parameter :: typeDiatom_simple = 4  
    integer, parameter :: typeCopepod = 10
    integer, parameter :: typePOM = 100
-   !
-   ! Specification of what to do with HTL losses:
-   !
-   real(dp), parameter :: fracHTL_to_N = 0.5 ! Half becomes urine that is routed back to N
-   real(dp), parameter :: fracHTL_to_POM = 0.5 ! Another half is fecal pellets that are routed back to the largest POM size class
-   real(dp), parameter :: rhoCN = 5.68
+
 
   !
   ! Variables that contain the size spectrum groups
@@ -72,19 +68,37 @@ contains
   subroutine setupGeneralistsOnly(n)
     integer, intent(in):: n
     call parametersInit(1, n, 2) ! 1 group, n size classes (excl nutrients and DOC)
-    call parametersAddGroup(typeGeneralist, n, 1.d0) ! generalists with n size classes
-    call parametersFinalize(0.1d0, .false., .false.) ! Use standard "linear" mortality
+    call parametersAddGroup(typeGeneralist, n, 0.0d0) ! generalists with n size classes
+    call parametersFinalize(.false., .false.) ! Use standard "linear" mortality
   end subroutine setupGeneralistsOnly
 
+  ! -----------------------------------------------
+  ! Setup for random generated parameters (tfha)
+  ! -----------------------------------------------
+  subroutine initRandom(nRandIter,nRandPar,randParam)
+    integer, intent(in):: nRandIter,nRandPar
+    real(dp), dimension(:), intent(in) :: randParam
+    !call parametersInit(1, n, 2) ! 1 group, n size classes (excl nutrients and !DOC)
+    call load_random(nRandIter,nRandPar,randParam)
+  end subroutine initRandom
+
+  subroutine setupGeneralists_random(n,iRand)
+    integer, intent(in):: n, iRand
+    !randParam = (/1.1, 3.1,4.1,0.1 /) 
+    !call load_random(randParam)
+    call parametersInit(1, n, 2) ! 1 group, n size classes (excl nutrients and DOC)
+    call parametersAddGroup(typeGeneralist, n, 0.0d0,iRand) ! generalists with n size classes
+    call parametersFinalize(.false., .false.) ! Use standard "linear" mortality
+  end subroutine setupGeneralists_random
   ! -----------------------------------------------
   ! A basic setup with generalists and POM
   ! -----------------------------------------------
   subroutine setupGeneralistsPOM(n, nPOM)
    integer, intent(in):: n, nPOM
    call parametersInit(2, n+nPOM, 2) ! 2 groups, n+nPOM size classes (excl nutrients and DOC)
-   call parametersAddGroup(typeGeneralist, n, 1.d0) ! generalists with n size classes
-   call parametersAddGroup(typePOM, nPOM, 1.d0) ! POM with nPOM size classes and max size 1 ugC
-   call parametersFinalize(0.1d0, .false., .false.) ! Use standard "linear" mortality
+   call parametersAddGroup(typeGeneralist, n, 0.0d0) ! generalists with n size classes
+   call parametersAddGroup(typePOM, nPOM, 1.0d0) ! POM with nPOM size classes and max size 1 ugC
+   call parametersFinalize(.false., .false.) ! Use standard "linear" mortality
  end subroutine setupGeneralistsPOM
 
   ! -----------------------------------------------
@@ -93,7 +107,7 @@ contains
    subroutine setupGeneralistsOnly_csp()
      call parametersInit(1, 10, 2) ! 1 group, 10 size classes (excl nutrients and DOC)
      call parametersAddGroup(typeGeneralist_csp, 10, 10.d0**(-1.3d0)) ! generalists with 10 size classes
-     call parametersFinalize(0.003d0, .true., .true.) ! Serra-Pompei (2020))
+     call parametersFinalize(.true., .true.) ! Serra-Pompei (2020))
    end subroutine setupGeneralistsOnly_csp
 
   ! -----------------------------------------------
@@ -103,7 +117,7 @@ contains
    integer, intent(in):: n
    call parametersInit(1, n, 3) ! 1 group, n size classes (excl nutrients)
    call parametersAddGroup(typeDiatom, n, 1.d0) ! diatoms with n size classes
-   call parametersFinalize(0.1d0, .false., .false.)
+   call parametersFinalize(.false., .false.)
  end subroutine setupDiatomsOnly
 
 !  ! -----------------------------------------------
@@ -113,7 +127,7 @@ contains
    integer, intent(in):: n
    call parametersInit(1, n, 3) ! 1 group, n size classes (excl nutrients)
    call parametersAddGroup(typeDiatom_simple, n, 1.d0) ! diatoms with n size classes
-   call parametersFinalize(0.1d0, .false., .false.)
+   call parametersFinalize(.false., .false.)
  end subroutine setupDiatoms_simpleOnly
  
   ! -----------------------------------------------
@@ -122,17 +136,17 @@ contains
    subroutine setupGeneralistsDiatoms(n)
       integer, intent(in):: n
       call parametersInit(2, 2*n, 3)
-      call parametersAddGroup(typeGeneralist, n, 1.d0) ! generalists with n size classes
+      call parametersAddGroup(typeGeneralist, n, 0.0d0) ! generalists with n size classes
       call parametersAddGroup(typeDiatom, n, 1.d0) ! diatoms with n size classes
-      call parametersFinalize(.1d0, .false., .false.)
+      call parametersFinalize(.false., .false.)
    end subroutine setupGeneralistsDiatoms
  
    subroutine setupGeneralistsDiatoms_simple(n)
       integer, intent(in):: n
       call parametersInit(2, 2*n, 3)
-      call parametersAddGroup(typeGeneralist, n, 1.d0) ! generalists with n size classes
+      call parametersAddGroup(typeGeneralist, n, 0.0d0) ! generalists with n size classes
       call parametersAddGroup(typeDiatom_simple, n, 1.d0) ! diatoms with n size classes
-      call parametersFinalize(0.1d0, .false., .false.)
+      call parametersFinalize(.false., .false.)
    end subroutine setupGeneralistsDiatoms_simple
  
   ! -----------------------------------------------
@@ -140,9 +154,9 @@ contains
   ! -----------------------------------------------
   subroutine setupGeneralistsCopepod()
     call parametersInit(2, 20, 2)
-    call parametersAddGroup(typeGeneralist, 10, 0.1d0)
+    call parametersAddGroup(typeGeneralist, 10, 0.0d0)
     call parametersAddGroup(typeCopepod, 10, .1d0) ! add copepod with adult mass .1 mugC
-    call parametersFinalize(0.003d0, .true., .true.) ! Use quadratic mortality
+    call parametersFinalize(.true., .true.) ! Use quadratic mortality
   end subroutine setupGeneralistsCopepod
 
   ! -----------------------------------------------
@@ -154,14 +168,14 @@ contains
     integer:: iCopepod
 
     call parametersInit(size(mAdult)+1, n*(size(mAdult)+1), 2)
-    call parametersAddGroup(typeGeneralist, n, 0.1d0)
+    call parametersAddGroup(typeGeneralist, n, 0.0d0)
     if ( size(mAdult) .eq. 0) then
-       call parametersFinalize(0.1d0, .true., .true.)
+       call parametersFinalize(.true., .true.)
     else
        do iCopepod = 1, size(mAdult)
           call parametersAddGroup(typeCopepod, n, mAdult(iCopepod)) ! add copepod
        end do
-       call parametersFinalize(0.001d0, .true., .true.)
+       call parametersFinalize(.true., .true.)
     end if
   end subroutine setupGeneric
   ! -----------------------------------------------
@@ -173,13 +187,13 @@ contains
    integer:: iCopepod
  
    call parametersInit(size(mAdult)+2, n + nPOM + nCopepod*size(mAdult), 2)
-   call parametersAddGroup(typeGeneralist, n, 0.1d0)
+   call parametersAddGroup(typeGeneralist, n, 0.0d0)
 
    do iCopepod = 1, size(mAdult)
       call parametersAddGroup(typeCopepod, nCopepod, mAdult(iCopepod)) ! add copepod
    end do
    call parametersAddGroup(typePOM, nPOM, maxval(group(nGroups-1)%spec%mPOM)) ! POM with nPOM size classes and max size 1 ugC
-   call parametersFinalize(0.001d0, .true., .true.)
+   call parametersFinalize(.true., .true.)
 
   end subroutine setupNUMmodel
 
@@ -196,7 +210,7 @@ contains
     do iCopepod = 1, size(mAdult)
        call parametersAddGroup(typeCopepod, n, mAdult(iCopepod)) ! add copepod
     end do
-    call parametersFinalize(0.003d0, .true., .true.)
+    call parametersFinalize(.true., .true.)
   end subroutine setupGeneric_csp
 
 
@@ -216,6 +230,8 @@ contains
     !
     ! Set groups:
     !
+	call read_namelist_general()
+	
     nGroups = nnGroups
     iCurrentGroup = 0
     nNutrients = nnNutrients
@@ -254,9 +270,10 @@ contains
   !    n: number of grid points
   !    mMax: the maximum size (mid-point in grid cell)
   ! -----------------------------------------------
-  subroutine parametersAddGroup(typeGroup, n, mMax)
+  subroutine parametersAddGroup(typeGroup, n, mMax,iRand)
     integer, intent(in):: typeGroup, n
     real(dp), intent(in):: mMax
+    integer, optional, intent(in) :: iRand
 
     type(spectrumGeneralists) :: specGeneralists
     type(spectrumDiatoms_simple):: specDiatoms_simple
@@ -280,7 +297,7 @@ contains
     !
     select case (typeGroup)
     case (typeGeneralist)
-      call initGeneralists(specGeneralists, n, mMax)
+      call initGeneralists(specGeneralists, n, iRand)
       allocate( group( iCurrentGroup )%spec, source=specGeneralists )
     case (typeDiatom_simple)
       call initDiatoms_simple(specDiatoms_simple, n, mMax)
@@ -305,12 +322,13 @@ contains
   !  Finalize the setting of parameters. Must be called when
   !  all groups have been added.
   ! -----------------------------------------------
-  subroutine parametersFinalize(mortHTL, boolQuadraticHTL, boolDecliningHTL)
-    real(dp), intent(in):: mortHTL
+  subroutine parametersFinalize(boolQuadraticHTL, boolDecliningHTL)
+    !real(dp) :: mortHTL
     logical, intent(in):: boolQuadraticHTL, boolDecliningHTL
     integer:: i,j, iGroup, jGroup
     real(dp),parameter :: betaHTL = 500.d0
     real(dp):: mHTL
+	!mortHTL = mortHTL_param
     !
     ! Calc theta:
     !
@@ -339,7 +357,7 @@ contains
    ! Calc the mass where HTL mortality is 50%
    mHTL = mHTL/betaHTL**1.5
 
-   call setHTL(mHTL, mortHTL, boolQuadraticHTL, boolDecliningHTL)
+   call setHTL(mHTL, mortHTL_param, boolQuadraticHTL, boolDecliningHTL)
    !
    ! If there is a POM group then calculate the interactions with other groups
    !
@@ -430,7 +448,7 @@ contains
           (1 / (1+(group(iGroup)%spec%m/mHTL)**(-2))) ! The size selectivity switch around mHTL
       if (boolDecliningHTL) then
          pHTL( ixStart(iGroup):ixEnd(iGroup) ) = pHTL( ixStart(iGroup):ixEnd(iGroup) ) &
-             * (group(iGroup)%spec%m/mRef)**(-0.25)
+             * (group(iGroup)%spec%m/mHTL)**(-0.25)
       end if
     enddo
 

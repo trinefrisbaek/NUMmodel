@@ -1,5 +1,4 @@
 module input
-  use globals
   implicit none
   
   
@@ -7,7 +6,7 @@ module input
   
   subroutine open_inputfile(file_unit, io_err)
     integer,  intent(out) :: file_unit, io_err
-    open(newunit=file_unit,action='read', file="..\input\input.nlm",iostat=io_err)
+    open(newunit=file_unit,action='read', file="../input/input.nlm",iostat=io_err)
     call check_iostat(io_err, &
         "Could not open file 'input.nml', perhaps it does not exist?")
   end subroutine open_inputfile

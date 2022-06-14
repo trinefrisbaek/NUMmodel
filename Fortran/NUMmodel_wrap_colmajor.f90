@@ -1,10 +1,11 @@
 module NUMmodel_wrap
   use iso_c_binding, only: c_double, c_int, c_bool
   use NUMmodel, only:  nGrid, setupGeneralistsOnly,  &
-      setupGeneralistsPOM, setHTL, getRates, &         
+       initRandom, setupGeneralists_random, &
+       setupGeneralistsPOM, setHTL, getRates, &         
        setupGeneralistsOnly_csp, &
        setupDiatomsOnly, &
-      setupDiatoms_simpleOnly, setupGeneralistsDiatoms_simple, &
+       setupDiatoms_simpleOnly, setupGeneralistsDiatoms_simple, &
        setupGeneralistsDiatoms, &
        setupGeneralistsCopepod, &
        setupGeneric, setupNUMmodel, setupGeneric_csp, &
@@ -13,6 +14,7 @@ module NUMmodel_wrap
        getBalance
 
   use globals
+  use random
 
   implicit none
 
@@ -22,6 +24,17 @@ contains
     integer(c_int), intent(in), value:: n
     call setupGeneralistsOnly(n)
   end subroutine f_setupGeneralistsOnly
+
+  subroutine f_initRandom(nRandIter, nRandPar, randParam) bind(c)
+    integer(c_int), intent(in), value:: nRandIter, nRandPar
+    real(c_double), intent(in) :: randParam(nRandIter*nRandPar)
+    call initRandom(nRandIter, nRandPar, randParam)
+  end subroutine f_initRandom
+
+  subroutine f_setupGeneralists_random(n, iRand) bind(c)
+    integer(c_int), intent(in), value:: n, iRand
+    call setupGeneralists_random(n, iRand)
+  end subroutine f_setupGeneralists_random
 
   subroutine f_setupGeneralistsPOM(n, nPOM) bind(c)
     integer(c_int), intent(in), value:: n, nPOM

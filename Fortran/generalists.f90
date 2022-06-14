@@ -5,11 +5,12 @@ module generalists
   use globals
   use spectrum
   use input
+  use random
   implicit none
 
   private 
 
-  real(dp) :: rhoCN ! SHOULD BE MOVED TO GLOBALS
+  !real(dp) :: rhoCN ! SHOULD BE MOVED TO GLOBALS
   !real(dp), parameter:: rhoCN = 5.68 ! SHOULD BE MOVED TO GLOBALS
   !
   ! Light uptake:
@@ -67,6 +68,10 @@ module generalists
   !real(dp), parameter:: reminHTL = 0.d0 ! fraction of HTL mortality remineralized to N and DOC
 
   real(dp) :: mMinGeneralist
+  real(dp) :: mMaxGeneralist
+  real(dp) :: algeamin
+  real(dp) :: Fswitch
+  logical  :: algeaPhoto
 
   type, extends(spectrumUnicellular) :: spectrumGeneralists
     real(dp), allocatable :: JFreal(:)
@@ -89,9 +94,9 @@ contains
   subroutine read_namelist()
     integer :: file_unit,io_err
 
-    namelist /input_generalists / rhoCN, epsilonL, alphaL, rLstar, alphaN,rNstar, epsilonF, &
-             & alphaF, cF, beta, sigma, cLeakage, delta, alphaJ, cR, &
-             & remin, remin2, reminF, mMinGeneralist
+    namelist /input_generalists / epsilonL, alphaN, epsilonF, &
+             & cF, beta, sigma, delta, &
+             & remin, remin2, reminF, mMinGeneralist, mMaxGeneralist, algeamin, Fswitch, algeaPhoto
 
     call open_inputfile(file_unit, io_err)
         read(file_unit, nml=input_generalists, iostat=io_err)
@@ -99,17 +104,27 @@ contains
 
   end subroutine read_namelist
 
-  subroutine initGeneralists(this, n, mMax)
+  subroutine initGeneralists(this, n, iRand)
     class(spectrumGeneralists):: this
-    real(dp), intent(in):: mMax
+    !real(dp), intent(in):: mMax
     integer, intent(in):: n
+    integer, optional, intent(in):: iRand
     integer:: i
-    real(dp) :: mMin
-    !real(dp), parameter:: mMin = 3.1623d-9
+    real(dp) :: mMin, mMax
     real(dp), parameter:: rho = 0.4*1d6*1d-12
+  
+    ! tfha: load random parameters
+    rNstar=rNstarRandom(iRand)
+    alphaL=alphaLRandom(iRand)
+    rLstar=rLstarRandom(iRand)
+    alphaF=alphaFRandom(iRand)
+    cLeakage=cLeakageRandom(iRand)
+    alphaJ=alphaJRandom(iRand)
+    cR=cRRandom(iRand)
 
     call read_namelist()
     mMin=mMinGeneralist
+    mMax=mMaxGeneralist
     call this%initUnicellular(n, mMin, mMax)
     allocate(this%JFreal(n))
 
@@ -126,7 +141,15 @@ contains
 
     this%AN = alphaN * this%r**(-2.) / (1.+(this%r/rNstar)**(-2.)) * this%m
     this%AL = alphaL/this%r * (1-exp(-this%r/rLstar)) * this%m * (1.d0-this%nu)
-    this%AF = alphaF*this%m
+    !tfh: if algea are not able to photosynthesise:
+    if (.not. algeaPhoto) then
+      do i = 1,this%n
+        if (this%m(i) .gt. algeamin) then
+        this%AL(i) = 0.d0
+        end if
+      end do
+    end if
+    this%AF = Fswitch*alphaF*this%m
     this%JFmax = cF/this%r * this%m
     
     this%JlossPassive = cLeakage/this%r * this%m ! in units of C
@@ -134,7 +157,6 @@ contains
     this%Jmax = alphaJ * this%m * (1.d0-this%nu) ! mugC/day
     this%Jresp = cR*alphaJ*this%m
 
-    this%AL = this%AL * (1.d0 - this%nu)
   end subroutine initGeneralists
 
   subroutine calcRatesGeneralists(this, L, N, DOC, gammaN, gammaDOC)

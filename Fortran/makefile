@@ -1,12 +1,26 @@
 #
-# Define lib-names depending on the system
+# Try to determine the operating system:
 #
 ifeq '$(findstring ;,$(PATH))' ';'
     UNAME := Windows
 else
     UNAME := $(shell uname 2>/dev/null || echo Unknown)
+    ifeq ($(UNAME), Unknown) 
+        UNAME := Windows # Assuming windows if we cannot find a uname
+        $(warning    Cannot determine system; assuming Windows)
+    endif
 endif
 
+$(info    System is $(UNAME))
+
+# Check for other windows name
+ifeq ($(findstring NT-,$(UNAME)),NT-)
+    # Found
+    UNAME=Windows
+endif
+#
+# Define lib-names depending on the system:
+#
 ifeq ($(UNAME), Darwin)
  libMatlab = ../lib/libNUMmodel_matlab.dylib
  libR = ../lib/libNUMmodel_R.dylib
@@ -23,12 +37,6 @@ ifeq ($(UNAME), Windows)
 endif
 
 #
-# Compile from OSX -> windows
-#
-#FORT = /usr/local/Cellar/mingw-w64/9.0.0_2/toolchain-x86_64/bin/x86_64-w64-mingw32-gfortran
-#libMatlab = ../lib/libNUMmodel_matlab.dll
-#libR = ../lib/libNUMmodel_R.dll
-#
 # iFortran:
 #
 #FORT=ifort
@@ -40,6 +48,7 @@ endif
 FORT=gfortran
 #FLAGS=-g3
 FLAGS= -fPIC -O2
+#FLAGS= -fPIC -g
 #LINK=
 #
 # nag fortran
@@ -48,7 +57,7 @@ FLAGS= -fPIC -O2
 
 
 
-OBJ = globals.o spectrum.o input.o generalists.o diatoms_simple.o diatoms.o generalists_csp.o copepods.o POM.o NUMmodel.o 
+OBJ = input.o globals.o spectrum.o random.o generalists.o diatoms_simple.o diatoms.o generalists_csp.o copepods.o POM.o NUMmodel.o 
 
 all: NUMmodel libMatlab libR
 

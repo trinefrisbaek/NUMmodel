@@ -48,7 +48,7 @@
       !alphaL = 0.13                 ! Scaling factor for light [unit]
       !rLstar = 7.5                  ! Description [unit]
 	  algeamin = 1.0d-6             ! size where algea begins
-	  algeaPhoto =.true.           ! ALGEAL PHOTOSYNTHESIS ON=.true. OR OFF=.false.
+	  algeaPhoto =.false.           ! ALGEAL PHOTOSYNTHESIS ON=.true. OR OFF=.false.
 	  
 !
 ! Dissolved nutrient uptake:

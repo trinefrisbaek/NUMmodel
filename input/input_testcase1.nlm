@@ -27,7 +27,7 @@
 
 	  fracHTL_to_N = 0.5            ! Half becomes urine that is routed back to N
 	  fracHTL_to_POM = 0.5          ! Another half is fecal pellets that are routed back to the largest POM size class
-	  mortHTL_param = 0.1d0 		! PHAGOTROPHY On=0.1d0 off=0.0d0
+	  mortHTL_param = 0.0d0 		! PHAGOTROPHY On=0.1d0 off=0.0d0
 /
 !
 ! Generalists
@@ -48,7 +48,7 @@
       !alphaL = 0.13                 ! Scaling factor for light [unit]
       !rLstar = 7.5                  ! Description [unit]
 	  algeamin = 1.0d-6             ! size where algea begins
-	  algeaPhoto =.true.           ! ALGEAL PHOTOSYNTHESIS ON=.true. OR OFF=.false.
+	  algeaPhoto =.false.           ! ALGEAL PHOTOSYNTHESIS ON=.true. OR OFF=.false.
 	  
 !
 ! Dissolved nutrient uptake:
@@ -61,7 +61,7 @@
       cF = 30.
       beta = 500.d0
       sigma = 1.3d0
-	  Fswitch =1.0d0				!PHAGOTROPHY On=1.0d0 off=0.0d0
+	  Fswitch =0.0d0				!PHAGOTROPHY On=1.0d0 off=0.0d0
 !
 ! Metabolism
 !
@@ -76,10 +76,7 @@
       remin2 = 0.5d0                ! Fraction of virulysis remineralized to DOC
       reminF = 0.1d0
 	  
-	  
-
 /
-
 !
 ! Copepods
 ! ========

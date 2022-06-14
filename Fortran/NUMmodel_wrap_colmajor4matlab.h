@@ -1,5 +1,9 @@
 void f_setupgeneralistsonly(const int n);
 
+void f_initrandom(const int nRandIter, const int nRandPar, double randParam[]);
+
+void f_setupgeneralists_random(const int n, const int iRand);
+
 void f_setupgeneralistspom(const int n, const int nPOM);
 
 void f_setupgeneralistsonly_csp();
