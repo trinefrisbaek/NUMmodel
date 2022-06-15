@@ -1,3 +1,20 @@
+% This script is a variation of the test_MonteCarlo that is used for
+% saving the gross rates of primary production shown in Figure S2 in 
+% Eckford-Soper et al., 2022. 
+% For a general description of the script see test_MonteCarlo.m. This
+% script iterate over a mixing rate from 10^-3 to 10^0.5 and introduces the 
+% choise to let organisms be mixed our of the mixed layer or not, through:
+%
+%       bUnicellularloss  = true (default) or false
+%
+% This scrip is as default run for the mean of the parameters and not
+% randomized. This can be modifyed by commenting out lines like
+%       r_star_d(:)= exp(meanval);
+%
+% Figure S2 can be plotted using script ../figures/plot_figS2.m
+%
+% created by: Ken H. Andersen and Trine F. Hansen, 2022
+
 for testcase=4
     disp(['testcase nr ',num2str(testcase)])
     time = datestr(clock,'YYYY_mm_dd_HH_MM')
@@ -11,8 +28,6 @@ for testcase=4
     % --------------------------- && -----------------------------
     % Choose light level:
     L=300;
-    % Choose the mixing rate:
-    d = [0.01 0.1];
     % Choose nutrient range and number of bins to iterate over (note ugP/l):
     Nmin=0.01;
     Nmax=40;
@@ -34,7 +49,6 @@ for testcase=4
     % ------------------------------------------------------------------------
     % Mixing rates: uniform distribution between d:
     % ------------------------------------------------------------------------
-    pd_d=makedist('Uniform','lower',d(1),'upper',d(2));
     d_rand=logspace(-3,log10(0.5),nRandIter);
     % ------------------------------------------------------------------------
     % r*d: Diffusive affility cross-over:
@@ -45,7 +59,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     r_star_d=random(pd,1,nRandIter);
-    r_star_d(1:nRandIter)=0.3;
+    r_star_d(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % Light harvesting: alphaL and r*L
     % aL = αLr−1(1 − exp(−r/r∗L))(1 − ν)
@@ -57,7 +71,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     rand_y=random(pd,1,nRandIter);
-    rand_y(1:nRandIter)=0.25;
+    rand_y(:)=exp(meanval);
 
     alpha_l=(3.*rand_y)./(4*p_const);
     
@@ -68,7 +82,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     rand_rlstar=random(pd,1,nRandIter);
-    rand_rlstar(1:nRandIter)=7.5;
+    rand_rlstar(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % phagotrophic clearance rate: aF
     % ------------------------------------------------------------------------
@@ -77,7 +91,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     aF_random=random(pd,1,nRandIter);
-    aF_random(1:nRandIter)=0.0189;
+    aF_random(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % passive losses: cpassive
     % ------------------------------------------------------------------------
@@ -86,7 +100,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     c_passive_random=random(pd,1,nRandIter);
-    c_passive_random(1:nRandIter)=0.03;
+    c_passive_random(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % maximum synthesis rate: αMax
     % ------------------------------------------------------------------------
@@ -95,7 +109,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     alphaMax_rand=random(pd,1,nRandIter);
-    alphaMax_rand(1:nRandIter)=0.4883;
+    alphaMax_rand(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % basal metabolism coef: αR
     % ------------------------------------------------------------------------
@@ -104,7 +118,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     alphaR_rand=random(pd,1,nRandIter);
-    alphaR_rand(1:nRandIter)=0.1;
+    alphaR_rand(:)=exp(meanval);
     
     % ------------------------------------------------------------------------
     % assemble random parameter
@@ -166,7 +180,6 @@ for testcase=4
     toc
     modelrun.p=p;
     modelrun.s=s;
-    modelrun.d=d;
     modelrun.nRandIter=nRandIter;
     modelrun.rand_Param=randParam;
     modelrun.prodGross=prodGross;

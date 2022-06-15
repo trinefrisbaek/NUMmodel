@@ -1,11 +1,16 @@
+% This script is a variation of the test_MonteCarlo that is used for
+% saving the gains and losses shown in Figure 4 in Eckford-Soper et
+% al., 2022. 
+% For a general description of the script see test_MonteCarlo.m. This
+% script saves the fluxes and rates and takes slightly longer to run. 
+%
+% Figure 4 can be plotted using script ../figures/plot_fig4.m
+% created by: Ken H. Andersen and Trine F. Hansen, 2022
 for testcase=4
     disp(['testcase nr ',num2str(testcase)])
     time = datestr(clock,'YYYY_mm_dd_HH_MM')
-    % User defined settings
-    % Choose test case 1-4
-    % testcase=1
     % Choose number of random iterations:
-    nRandIter=2 %1000;
+    nRandIter=1000;
     % Choose number of size classes:
     n = 25;
     % --------------------------- && -----------------------------
@@ -42,7 +47,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     r_star_d=random(pd,1,nRandIter);
-    %r_star_d(:)=0.3;
+    %r_star_d(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % Light harvesting: alphaL and r*L
     % aL = αLr−1(1 − exp(−r/r∗L))(1 − ν)
@@ -54,7 +59,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     rand_y=random(pd,1,nRandIter);
-    %rand_y(:)=0.25;
+    %rand_y(:)=exp(meanval);
 
     alpha_l=(3.*rand_y)./(4*p_const);
     
@@ -65,7 +70,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     rand_rlstar=random(pd,1,nRandIter);
-    %rand_rlstar(:)=7.5;
+    %rand_rlstar(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % phagotrophic clearance rate: aF
     % ------------------------------------------------------------------------
@@ -74,7 +79,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     aF_random=random(pd,1,nRandIter);
-    %aF_random(:)=0.0189;
+    %aF_random(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % passive losses: cpassive
     % ------------------------------------------------------------------------
@@ -83,7 +88,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     c_passive_random=random(pd,1,nRandIter);
-    %c_passive_random(:)=0.03;
+    %c_passive_random(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % maximum synthesis rate: αMax
     % ------------------------------------------------------------------------
@@ -92,7 +97,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     alphaMax_rand=random(pd,1,nRandIter);
-    %alphaMax_rand(:)=0.4883;
+    %alphaMax_rand(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % basal metabolism coef: αR
     % ------------------------------------------------------------------------
@@ -101,7 +106,7 @@ for testcase=4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     alphaR_rand=random(pd,1,nRandIter);
-    %alphaR_rand(:)=0.1;
+    %alphaR_rand(:)=exp(meanval);
     
     % ------------------------------------------------------------------------
     % assemble random parameter

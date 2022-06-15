@@ -1,9 +1,52 @@
+% This is the main script for running the NUM model with randomized
+% variables used in the Eckford-Soper et al, 2022. The script loops through
+% the four cases: 
+%       1) Case 1: Picoplankton phototrophy/no grazing
+%       2) Case 2: Full phototrophy/no grazing
+%       3) Case 3: Picoplankton phototrophy/ grazing
+%       2) Case 2: Full phototrophy/ grazing
+%
+% The script calls the fortran library in ../lib and the parameter input
+% files in ../input. 
+%
+% When running the script the user can modify several parameters:
+%       nRandIter  = number of iterations with random parameters
+%       n          =  number of generalist size classes     
+%       L          =  light level
+%       d          =  mixing rate interval
+%       Nmin       =  minimum nutrient level for Figure 2 in article(ugP/l)
+%       Nmax       =  maximum nutrient level for Figure 2 in article (ugP/l)
+%       Nbins      =  number of nutrient bins for Figure 2 in article
+%       P0         =  Three specific nutrient levels (molar mass) used in
+%                    Figure 3 and Figure 4
+%       bParallel  =  The choise to run in parallel (true) or sequential
+%                    (false)
+% In the loop the following can be changed:
+%       p.tEnd     = length of simulation in days
+%       p.u0(3:end)= initial concentration of generalists
+%       p.depthProductiveLayer = depth of mixed layer in meters
+%
+% The script randomizes the parameters mixing rate (d), diffusive affinity
+% cross-over (r*d), y (used to calculate Light harvesting affinity
+% (αL)), Light affinity cross-over (r*L), phagotrophic clearance rate
+% (aF), passive losses (cpassive), maximum synthesis rate (αMax) and basal
+% metabolism coefficient (αR). If the user wishes to run the script with
+% only the mean of the parameters this can be done by uncommenting the
+% centences that overwrite the random number generator, ex: 
+%       r_star_d(:)= exp(meanval);
+%
+% The model outputs parameters, random number seed (for reproducibility),
+% random parameters, random mixing rate and the results (D). All of this is
+% contained in a structure saved in
+%
+%       '../results/results_testcase{testcase}/{time}.mat'
+%
+% Results can be plotted using scripts in ../figures folder
+%
+% created by: Ken H. Andersen and Trine F. Hansen, 2022
 for testcase=1:4
     disp(['testcase nr ',num2str(testcase)])
     time = datestr(clock,'YYYY_mm_dd_HH_MM')
-    % User defined settings
-    % Choose test case 1-4
-    % testcase=1
     % Choose number of random iterations:
     nRandIter=1000;
     % Choose number of size classes:
@@ -43,7 +86,7 @@ for testcase=1:4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     r_star_d=random(pd,1,nRandIter);
-    %r_star_d(:)=0.3;
+    %r_star_d(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % Light harvesting: alphaL and r*L
     % aL = αLr−1(1 − exp(−r/r∗L))(1 − ν)
@@ -54,7 +97,7 @@ for testcase=1:4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     rand_y=random(pd,1,nRandIter);
-    %rand_y(:)=y;
+    %rand_y(:)=exp(meanval);
     alpha_l=(3.*rand_y)./(4*p_const);
     
     
@@ -63,7 +106,7 @@ for testcase=1:4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     rand_rlstar=random(pd,1,nRandIter);
-    %rand_rlstar(:)=rLstar;
+    %rand_rlstar(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % phagotrophic clearance rate: aF
     % ------------------------------------------------------------------------
@@ -72,7 +115,7 @@ for testcase=1:4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     aF_random=random(pd,1,nRandIter);
-    %aF_random(:)=0.03;
+    %aF_random(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % passive losses: cpassive
     % ------------------------------------------------------------------------
@@ -81,7 +124,7 @@ for testcase=1:4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     c_passive_random=random(pd,1,nRandIter);
-    %c_passive_random(:)=c_passive;
+    %c_passive_random(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % maximum synthesis rate: αMax
     % ------------------------------------------------------------------------
@@ -90,7 +133,7 @@ for testcase=1:4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     alphaMax_rand=random(pd,1,nRandIter);
-    %alphaMax_rand(:)=alphaMax;
+    %alphaMax_rand(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % basal metabolism coef: αR
     % ------------------------------------------------------------------------
@@ -99,7 +142,7 @@ for testcase=1:4
     pd=makedist('lognormal','mu',meanval,'sigma',sigma);
     pd=truncate(pd,exp(meanval-2*sigma),exp(meanval+2*sigma));
     alphaR_rand=random(pd,1,nRandIter);
-    %alphaR_rand(:)=alphaR;
+    %alphaR_rand(:)=exp(meanval);
     % ------------------------------------------------------------------------
     % assemble random parameter
     % ------------------------------------------------------------------------
