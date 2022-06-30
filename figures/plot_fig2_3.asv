@@ -1,0 +1,344 @@
+% This script generates Figure 2 and 3 in Eckford-Soper et al, 2022. 
+% created by: Trine Frisbæk Hansen, 2022
+addpath(genpath(pwd),'-End')
+%% setup figure 1 and 2
+psize = [18 22];
+res = 1200;
+fh1=figure('Color','w','Name','Mean sweep plot','units','centimeters','Position',[2 2 psize],'paperunits','centimeters','paperposition',[0 0 psize/res]);
+psize = [22 22];
+res = 1200; %dpi
+fh2=figure('Name','fordeling testcase ','Color','w','units','centimeters','Position',[2 2 psize],'paperunits','centimeters','paperposition',[0 0 psize/res]);
+
+%% Load test info and define results to use
+load('testoverview.mat');
+load('testtext.mat');
+tests_combined=load('testnumbers.mat');
+test_names={'test1','test2','test3','test4'};
+
+for testcase=1:4
+    clear D_meandataset
+%     clearvars -except testoverview testtext testcase varargin fh1 fh2 fh3
+    %% info on current test
+    tests=tests_combined.(test_names{testcase});
+%     tests=varargin{testcase};
+    testnr=find(strcmp(cellstr(tests{1}),testoverview.(1)));
+    testtype=testoverview{testnr,2};
+    testdescr=testtext{testtype,2};
+    folder=fullfile(pwd, '..','results',['results_testcase',num2str(testtype)]);
+    
+   
+    %% Combine dataset
+    nRandIter=0;
+    for i=1:length(tests)
+        load(fullfile(folder,tests{i}));
+        nRandIter_start=nRandIter+1;
+        nRandIter=nRandIter+modelrun.nRandIter;
+        D(nRandIter_start:nRandIter,:,:)=modelrun.D;
+    end
+    p=modelrun.p;
+    
+    %% Choose divisions of plankton into pico, nano and micro
+    sections=[2 20 200];
+    mass=mass_function(sections./2);
+    
+    
+    %% Plot figures
+    figure(fh1)
+    ax=subplot(4,1,testcase);
+    plotfig2(ax,D,p,testcase,testdescr,mass)
+    
+    figure(fh2)
+    hold on
+    plotfig3(fh2,D,p,testcase,testdescr,mass)
+    
+    
+end
+
+function plotfig3(fh2,D,p,testcase,testdescr,mass)
+x=p.m(3:end);
+
+%% Start loop through nutrient concentrations (start with highest)
+for j = length(p.P0):-1:1
+    
+    
+    %% pick data from this nutrient concentration
+    ii=p.Nbins+j;
+    yval=squeeze(D(:,ii,:));
+%     
+%     
+    %%  Find median of MonteCarlo
+    y_median=squeeze(median(yval,1,'omitnan'));
+
+            %% bin biomass data
+            edges=[0, 0.5:2:100];
+            for i=1:25
+                thisdata=squeeze(yval(:,i));
+                N = histcounts(thisdata,edges);
+                mycounts(:,i)=(N./sum(N).*100)';
+            end
+            mycounts(mycounts<1)=0;
+            a=log10(mycounts);
+            a(a<0)=0;
+            tnr=(testcase-1).*3;
+%             switch testcase
+%                 case 1
+%                     tnr=[1:3];
+%                 case 2
+%                     tnr=[4:6];
+%                 case 3
+%                     tnr=[7:9];
+%                 case 4
+%                     tnr=[10:12];
+%             end
+            
+            subplot(4,3,tnr+j)
+            
+            [X, Y]=meshgrid(x, edges(1:end-1));
+            contourf(X,Y,a,20,'LineStyle','none')
+            
+            set(gca,'xscale','log');
+            set(gca,'yscale','log');
+            ax=gca;
+            %         caxis([log10(1),log10(100)])
+            caxis([log10(0) log10(20)])
+            cbarnumbers=1:2:20;
+            mylabels = string(1:2:20);
+            mylabels(1) = "<1";
+            mylabels(end) = ">20";
+            hcb=colorbar(ax,'YTick',log10(cbarnumbers),'YTickLabel',mylabels);
+            %             hcb.Title.String = "%";
+            
+            hold on;
+            
+            plot(x,y_median,'k','LineStyle','-','linewidth',2)
+            set(gca,'xscale','log','XTick',10.^(-8:2),'xscale','log')
+            xlim([min(x) max(x)])
+            ylim([1 100])
+            set(gca,'TickDir','in','XColor',[1 1 1],'YColor',[1 1 1])
+
+            ax.YTick=[10^0 10^1 10^2];
+            ax.MinorGridAlpha=0.15;
+            
+            ax=gca;
+            color='{0 0 0}';
+            
+            
+            if testcase==4
+                change_tickTextColor(ax,color,'x')
+            end
+            if j==1
+                change_tickTextColor(ax,color,'y')
+            end
+           
+            text(5*10^-9,7*10^1,['P = ',num2str(p.P0(j)./30.97)],'Color','w')
+            
+            ax.YLabel.Color='k';
+            ax.XLabel.Color='k';
+            
+            set(findall(gcf,'-property','FontSize'),'FontSize',10)
+            set(findall(gcf,'-property','FontName'),'FontName','Arial')
+            
+end
+
+end
+
+
+function plotmyfigure3(D,p,testcase)
+for i = 1:length(p.P0)
+    ii=p.Nbins+i;
+    figtit=['Distribution for P0= ',num2str(p.P0(i)/30.97),' for testcase ',num2str(testcase)];
+    figure('Color','w','Name',figtit)
+    for k=1:25
+        subplot(5,5,k)
+        kk=squeeze(D(:,ii,k));
+        edges = 10.^(0:0.1:2);% create logarithmic bin sizes
+        [N,edges] = histcounts(kk,edges,'Normalization','countdensity');
+        g = histogram('BinEdges',edges,'BinCounts',N);
+        set(gca, "Xscale", "log")
+        set(gca, "YScale", "log")
+        %         histogram(kk,25)
+        %         set(gca,'xscale','log')
+        title(['Size class: ',num2str(k)]);
+    end
+end
+title(['Case nr.', num2str(testcase)]);
+end
+
+function plothistograms(dataset,y_median)
+figure;
+for x=1:25
+    subplot(5,5,x);
+    h=histogram(squeeze(dataset(:,x)),200);
+    hold on
+    plot([y_median(x) y_median(x)],[0 max(h.Values)],'r');
+    title(num2str(x))
+    
+end
+end
+
+function plotMonteCarlohistogram(yval_this_size,databelow,dataabove,dcurr,rstard,alphal,rstarl,aF,c_passive,alphamax,alphar)
+txt={'below cutoff','above cutoff'};
+for i=1:2
+    thiscase=txt{i};
+    switch thiscase
+        case 'below cutoff'
+            thisdata=databelow;
+        case 'above cutoff'
+            thisdata=dataabove;
+    end
+    
+    
+    figure('Color','w','Name',['Check distribution ',txt{i}]);
+    dcurrlarge=dcurr(thisdata);
+    rstardlarge=rstard(thisdata);
+    alphallarge=alphal(thisdata);
+    rstarllarge=rstarl(thisdata);
+    aFlarge=aF(thisdata);
+    clarge=c_passive(thisdata);
+    alphamaxlarge=alphamax(thisdata);
+    alpharlarge=alphar(thisdata);
+    
+    subplot(2,4,1) %*****
+    histogram(dcurrlarge,20);
+    ax=gca;
+    hold on
+    mymean=0.05;
+    plot([mymean mymean],[0 ax.YLim(2)],'r')
+    xlim([0.01 0.1])
+    title('d')
+    %
+    subplot(2,4,2) %*****
+    edges = 10.^(-1:0.01:0);
+    histogram(rstardlarge,edges);
+    set(gca,'xscale','log');
+    hold on
+    mymean=log(0.3);
+    mysigma=log(1.2214);
+    ax=gca;
+    y=normpdf(log(edges),mymean,mysigma);
+    y=y.*(ax.YLim(2)/max(y));
+    plot(edges,y)
+    plot([exp(mymean) exp(mymean)],[0 ax.YLim(2)],'r')
+    title('r^*_D')
+    %
+    %
+    subplot(2,4,3) %*****
+    edges = 10.^(-2:0.05:1);
+    histogram(alphallarge,edges);
+    set(gca,'xscale','log');
+    hold on
+    mymean=log(0.4737);
+    mysigma=log(1.6447);
+    ax=gca;
+    y=normpdf(log(edges),mymean,mysigma);
+    y=y.*(ax.YLim(2)/max(y));
+    plot(edges,y)
+    plot([exp(mymean) exp(mymean)],[0 ax.YLim(2)],'r')
+    title('\alpha_L')
+    %
+    subplot(2,4,4) %*****
+    edges = 10.^(0:0.05:1.5);
+    histogram(rstarllarge,edges);
+    set(gca,'xscale','log');
+    hold on
+    mymean=log(7.5);
+    mysigma=log(1.6487);
+    ax=gca;
+    y=normpdf(log(edges),mymean,mysigma);
+    y=y.*(ax.YLim(2)/max(y));
+    plot(edges,y)
+    plot([exp(mymean) exp(mymean)],[0 ax.YLim(2)],'r')
+    title('r^*_L')
+    %
+    subplot(2,4,5) %*****
+    edges = 10.^(-5:0.05:0);
+    histogram(aFlarge,edges);
+    set(gca,'xscale','log');
+    hold on
+    mymean=log(0.0189);
+    mysigma=log(4.8576);
+    ax=gca;
+    y=normpdf(log(edges),mymean,mysigma);
+    y=y.*(ax.YLim(2)/max(y));
+    plot(edges,y)
+    plot([exp(mymean) exp(mymean)],[0 ax.YLim(2)],'r')
+    title('aF')
+    %
+    subplot(2,4,6) %*****
+    edges = 10.^(-3:0.05:1);
+    histogram(clarge,edges);
+    set(gca,'xscale','log');
+    hold on
+    mymean=log(0.03);
+    mysigma=log(1.8226);
+    ax=gca;
+    y=normpdf(log(edges),mymean,mysigma);
+    y=y.*(ax.YLim(2)/max(y));
+    plot(edges,y)
+    plot([exp(mymean) exp(mymean)],[0 ax.YLim(2)],'r')
+    title('c_{passive}')
+    %
+    subplot(2,4,7) %Alphamax
+    edges = 10.^(-1:0.05:1);
+    histogram(alphamaxlarge,edges);
+    set(gca,'xscale','log');
+    hold on
+    mymean=log(0.4883);
+    mysigma=log(2.1029);
+    ax=gca;
+    y=normpdf(log(edges),mymean,mysigma);
+    y=y.*(ax.YLim(2)/max(y));
+    plot(edges,y)
+    plot([exp(mymean) exp(mymean)],[0 ax.YLim(2)],'r')
+    title('\alpha_{max}')
+    %
+    subplot(2,4,8) %*****
+    edges = 10.^(-2:0.05:0);
+    histogram(alpharlarge,edges);
+    set(gca,'xscale','log');
+    hold on
+    mymean=log(0.1);
+    mysigma=log(1.4918);
+    ax=gca;
+    y=normpdf(log(edges),mymean,mysigma);
+    y=y.*(ax.YLim(2)/max(y));
+    plot(edges,y)
+    plot([exp(mymean) exp(mymean)],[0 ax.YLim(2)],'r')
+    title('\alpha_r')
+end
+%
+figure('Color','w','Name','\alpha_{max} vs d');
+x=0.01:0.005:0.1; %d
+y=0.01:0.01:2.2; %alpha
+[X,Y]=meshgrid(x,y);
+
+dcurrlarge=dcurr(dataabove);
+dcurrsmall=dcurr(databelow);
+alphamaxlarge=alphamax(dataabove);
+alphamaxsmall=alphamax(databelow);
+
+subplot(1,3,1)
+Z=griddata(dcurr,alphamax,yval_this_size,X,Y);
+contourf(X,Y,Z,'LineStyle','none')
+xlabel('d')
+ylabel('\alpha_{max}')
+title('Biomass all')
+
+subplot(1,3,2)
+Z=griddata(dcurrlarge,alphamaxlarge,yval_this_size(dataabove),X,Y);
+contourf(X,Y,Z,'LineStyle','none')
+xlabel('d')
+ylabel('\alpha_{max}')
+title('Biomass>0.1\mug_C/l')
+
+subplot(1,3,3)
+Z=griddata(dcurrsmall,alphamaxsmall,yval_this_size(databelow),X,Y);
+contourf(X,Y,Z,'LineStyle','none')
+shading flat
+xlabel('d')
+ylabel('\alpha_{max}')
+title('Biomass<0.1\mug_C/l')
+
+end
+
+

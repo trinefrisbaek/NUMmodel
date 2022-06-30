@@ -1,4 +1,4 @@
-% This script generates the first figure in Eckford-Soper 2022 displaying
+% This script generates Figure 1 in Eckford-Soper et al, 2022 displaying
 % acritarch data from the Paleoproterozoic, Mesoproterozoic and
 % Neoproterozoic.
 % Data from J. W. Huntley, S. Xiao, M. Kowalewski, 1.3 Billion years of 
